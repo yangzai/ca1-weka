@@ -7,6 +7,8 @@ import weka.classifiers.meta.Vote;
 import weka.core.Instances;
 import weka.core.converters.CSVLoader;
 import weka.core.converters.ConverterUtils.DataSource;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.Remove;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,10 +21,10 @@ import java.util.stream.Stream;
  */
 public class Yeast {
     public static void main(String[] args) throws Exception {
-        // load
+        // load (with file conversion to csv format)
         Path csvPath = Paths.get("yeast.csv");
 
-        try(Stream<String> stream = Files.lines(Paths.get("yeast.data"))) {
+        try (Stream<String> stream = Files.lines(Paths.get("yeast.data"))) {
             Stream<String> csvStream = stream.map(l -> l.replaceAll("\\s+", ","));
             Files.write(csvPath, (Iterable<String>)csvStream::iterator);
         }
@@ -33,9 +35,16 @@ public class Yeast {
         Instances data = DataSource.read(csvLoader);
         Files.deleteIfExists(csvPath);
 
+        // drop sequence name attr
+        Remove remove = new Remove();
+        remove.setAttributeIndices("1"); //index from 1
+        remove.setInputFormat(data);
+        data = Filter.useFilter(data, remove);
+
         if (data.classIndex() == -1)
             data.setClassIndex(data.numAttributes() - 1);
 
+        // split training and testing data
         data.randomize(new Random(0));
         int percentSplit = 75;
         int trainSize = Math.round(data.size() * percentSplit / 100);

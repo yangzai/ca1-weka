@@ -8,6 +8,8 @@ import weka.core.Instances;
 import weka.core.converters.CSVLoader;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.core.converters.Loader;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.Remove;
 
 import java.io.File;
 import java.util.Random;
@@ -21,9 +23,11 @@ public class Wine {
         Loader csvLoader = new CSVLoader();
         csvLoader.setSource(new File("winequality-white.csv"));
         Instances data = DataSource.read(csvLoader);
+
         if (data.classIndex() == -1)
             data.setClassIndex(data.numAttributes() - 1);
 
+        // split training and testing data
         data.randomize(new Random(0));
         int percentSplit = 75;
         int trainSize = Math.round(data.size() * percentSplit / 100);
